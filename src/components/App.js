@@ -1,51 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const App = () => {
-    const [records, setRecords] = useState([]);
-    const [newRecord, setNewRecord] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [token, setToken] = useState(null);
 
-    useEffect(() => {
-        fetch('/.netlify/functions/getRecords')
-            .then(response => response.json())
-            .then(data => setRecords(data));
-    }, []);
-
-    const addRecord = () => {
-        fetch('/.netlify/functions/createRecord', {
+    const register = async () => {
+        const response = await fetch('/.netlify/functions/register', {
             method: 'POST',
-            body: JSON.stringify({ name: newRecord }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            setRecords([...records, { _id: data.id, name: newRecord }]);
-            setNewRecord('');
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
         });
+        const data = await response.json();
+        console.log(data);
     };
 
-    const deleteRecord = (id) => {
-        fetch('/.netlify/functions/deleteRecord', {
+    const login = async () => {
+        const response = await fetch('/.netlify/functions/login', {
             method: 'POST',
-            body: JSON.stringify({ id }),
-        })
-        .then(() => setRecords(records.filter(record => record._id !== id)));
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json();
+        if (data.token) {
+            setToken(data.token);
+        }
+        console.log(data);
+    };
+
+    const logout = () => {
+        setToken(null);
     };
 
     return (
         <div>
-            <h1>Records</h1>
-            <ul>
-                {records.map(record => (
-                    <li key={record._id}>
-                        {record.name} <button onClick={() => deleteRecord(record._id)}>Delete</button>
-                    </li>
-                ))}
-            </ul>
+            <h1>Authentication</h1>
             <input
                 type="text"
-                value={newRecord}
-                onChange={e => setNewRecord(e.target.value)}
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
             />
-            <button onClick={addRecord}>Add</button>
+            <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
+            <button onClick={register}>Register</button>
+            <button onClick={login}>Login</button>
+            <button onClick={logout}>Logout</button>
         </div>
     );
 };
